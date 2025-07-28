@@ -2,62 +2,552 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scoreboy Lite</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: url('https://images.unsplash.com/photo-1584120075590-9876c53cb48c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    input, button, select {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #888;
+      cursor: default;
+    }
+    button:hover:enabled {
+      background-color: #45a049;
+    }
+    .score-box {
+      font-size: 20px;
+      margin-top: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    .page-title {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn-row button {
+      width: 48%;
+      padding: 12px 0;
+      font-size: 16px;
+    }
+    /* Hamburger menu style */
+    #menuToggle, #setupMenuToggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 28px;
+      cursor: pointer;
+      user-select: none;
+      color: #333;
+    }
+    #pizzaMenu, #setupPizzaMenu {
+      position: absolute;
+      top: 50px;
+      right: 15px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      padding: 10px;
+      width: 140px;
+      display: none;
+      z-index: 1000;
+    }
+    #setupPizzaMenu button {
+      width: 100%;
+      margin: 0 0 6px 0; /* only bottom margin to add gap */
+      padding: 10px;
+      background-color: #e53935;  /* keep red */
+      font-weight: bold;
+      display: block;
+    }
+    #setupPizzaMenu button:hover {
+      background-color: #d32f2f; /* keep hover red */
+    }
+    #pizzaMenu button:hover, #setupPizzaMenu button:hover {
+      background-color: #d32f2f;
+    }
+
+    /* Score display styling - updated per your request */
+    #customScoreDisplay {
+      position: relative;
+      margin-top: 100px; /* 100px gap from the bottom-most item (#scoreDisplay) */
+      width: 380px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      color: #222;
+      text-align: right;
+      user-select: none;
+    }
+    #customScoreDisplay .score-main {
+      font-weight: 700;
+      font-size: 100px; /* 120 + 10 as requested */
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+    #customScoreDisplay .score-overs {
+      font-weight: 700;
+      font-size: 65px; /* half of 130 + 10 */
+      line-height: 1;
+      margin-top: -10px; /* bring closer */
+    }
+   }
+  </style>
 </head>
 <body>
-  <h1>Scoreboy Lite</h1>
 
-  <input id="scoreInput" type="text" placeholder="Enter score (0-6 or X)" maxlength="1" />
-  <button onclick="submitScore()">Submit Score</button>
-  <button onclick="resetMatch()">Reset Match</button>
+  <!-- Login Page -->
+  <div class="container" id="loginPage">
+    <h2>Welcome to Scoreboy v1.0</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <div id="loginError" style="color:red;"></div>
+  </div>
 
-  <div id="runsDisplay">Runs: 0</div>
-  <div id="wicketsDisplay">Wickets: 0</div>
-  <div id="oversDisplay">Overs: 0.0</div>
+  <!-- Menu Page -->
+  <div class="container hidden" id="menuPage">
+    <div class="page-title">Welcome to Scoreboy Lite</div>
+    <button onclick="selectPage(1)">Scoreboy Lite</button>
+    <button disabled>Team Score (Coming Soon)</button>
+    <button disabled>Scoreboy Suite (Coming Soon)</button>
+    <button onclick="resetSession()" style="background:#e53935; margin-top:20px;">Reset Session</button>
+  </div>
+
+  <!-- Setup Page -->
+  <div class="container hidden" id="setupPage">
+    <div class="page-title">Setup Match</div>
+
+    <!-- Added hamburger menu for setup page -->
+    <div id="setupMenuToggle" title="Menu">&#9776;</div>
+    <div id="setupPizzaMenu">
+      <button onclick="resetSessionConfirm()">Reset Session</button>
+    </div>
+
+    <label for="numPlayers">Number of players:</label>
+    <select id="numPlayers">
+      <!-- Options 3 to 11 with zero padded -->
+      <option value="3">03</option>
+      <option value="4">04</option>
+      <option value="5">05</option>
+      <option value="6">06</option>
+      <option value="7">07</option>
+      <option value="8">08</option>
+      <option value="9">09</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+    </select>
+
+    <label for="numOvers">Number of overs:</label>
+    <select id="numOvers">
+      <option value="3">03</option>
+      <option value="5">05</option>
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="9999">Test (No Over Limit)</option>
+    </select>
+
+    <button onclick="startMatch()">Start Match</button>
+  </div>
+
+  <!-- Score Page -->
+  <div class="container hidden" id="scorePage">
+    <div class="page-title">Scoreboy Lite</div>
+    <!-- Hamburger "pizza" menu icon -->
+    <div id="menuToggle" title="Menu">&#9776;</div>
+    <div id="pizzaMenu">
+      <button onclick="resetMatchConfirm()">Reset Match</button>
+      <button onclick="resetSessionConfirm()">Reset Session</button>
+    </div>
+
+    <input type="text" id="runInput" maxlength="1" placeholder="Enter 0-6 or X" onkeypress="handleKeyPress(event)" />
+    <div class="btn-row">
+      <button id="wideBtn" onclick="addWide()">Wide +1 run</button>
+      <button id="startTeamBBtn" disabled style="background:#888; color:#ccc; cursor: default;">Start Team B</button>
+    </div>
+    <div class="score-box" id="scoreDisplay">Runs: 0 | Overs: 0.0 | Wickets: 0</div>
+
+    <!-- Big custom score display -->
+    <div id="customScoreDisplay" aria-live="polite" aria-atomic="true" aria-relevant="text">
+      <div class="score-main" id="customRunsWickets">0 - 0</div>
+      <div class="score-overs" id="customOvers">0.0 overs</div>
+    </div>
+  </div>
+
+  <!-- Win Page -->
+  <div class="container hidden" id="winPage">
+    <div class="page-title">🏆 Match Complete 🏆</div>
+    <div id="winMessage" style="font-size:18px; margin:20px 0;"></div>
+    <button onclick="resetMatchConfirm()">Reset Match</button>
+  </div>
 
   <script>
-    function submitScore() {
-      const score = document.getElementById('scoreInput').value;
+    const users = {
+      mra001: 'wearelive',
+      mrv002: 'wearelive'
+    };
 
-      fetch('https://scoreboy-backend.onrender.com/api/updateScore', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ score })
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Update frontend display
-        document.getElementById('runsDisplay').textContent = `Runs: ${data.runs}`;
-        document.getElementById('wicketsDisplay').textContent = `Wickets: ${data.wickets}`;
-        document.getElementById('oversDisplay').textContent = `Overs: ${data.overs}`;
+    function login() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      const errorDiv = document.getElementById('loginError');
+      if (users[user] === pass) {
+        errorDiv.textContent = '';
+        localStorage.setItem('loggedIn', 'true');
+        showMenu();
+      } else {
+        errorDiv.textContent = 'Invalid username or password';
+      }
+    }
 
-        // Clear input
-        document.getElementById('scoreInput').value = '';
-      })
-      .catch(error => {
-        console.error('Error submitting score:', error);
-      });
+    function showMenu() {
+      hideAllPages();
+      document.getElementById('menuPage').classList.remove('hidden');
+    }
+
+    function selectPage(page) {
+      localStorage.setItem('selectedPage', page);
+      if(page == 1){
+        localStorage.removeItem('innings');
+        localStorage.removeItem('maxPlayers');
+        localStorage.removeItem('maxOvers');
+        hideAllPages();
+        document.getElementById('setupPage').classList.remove('hidden');
+      }
+    }
+
+    function startMatch() {
+      const players = parseInt(document.getElementById('numPlayers').value);
+      const overs = parseInt(document.getElementById('numOvers').value);
+      if (players < 3 || players > 11) {
+        alert('Number of players must be between 3 and 11');
+        return;
+      }
+      if (isNaN(overs) || overs < 1) {
+        alert('Number of overs must be at least 1 or select Test');
+        return;
+      }
+      localStorage.setItem('maxPlayers', players);
+      localStorage.setItem('maxOvers', overs);
+      localStorage.setItem('innings', 'A');
+      localStorage.setItem('runs', '0');
+      localStorage.setItem('balls', '0');
+      localStorage.setItem('wickets', '0');
+      localStorage.setItem('matchOver', 'false');
+      localStorage.removeItem('teamARuns');
+
+      hideAllPages();
+      document.getElementById('scorePage').classList.remove('hidden');
+      loadScore();
+      updateInputState();
+      updateWideButton();
+      updateStartTeamBBtn();
+
+      document.getElementById('runInput').focus();
+    }
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') {
+        const val = document.getElementById('runInput').value.trim();
+        if (!/^([0-6xX])$/.test(val)) return;
+
+        let runs = parseInt(localStorage.getItem('runs') || '0');
+        let balls = parseInt(localStorage.getItem('balls') || '0');
+        let wickets = parseInt(localStorage.getItem('wickets') || '0');
+        const innings = localStorage.getItem('innings');
+        const maxPlayers = parseInt(localStorage.getItem('maxPlayers') || '11');
+        const maxOvers = parseInt(localStorage.getItem('maxOvers') || '9999');
+
+        if (innings !== 'A' && innings !== 'B') return;
+
+        if (val.toLowerCase() === 'x') {
+          wickets++;
+        } else {
+          runs += parseInt(val);
+        }
+
+        balls++;
+
+        localStorage.setItem('runs', runs);
+        localStorage.setItem('balls', balls);
+        localStorage.setItem('wickets', wickets);
+
+        document.getElementById('runInput').value = '';
+
+        loadScore();
+
+        const oversCompleted = Math.floor(balls / 6);
+        const ballsInCurrentOver = balls % 6;
+
+        if ((oversCompleted >= maxOvers && ballsInCurrentOver === 0) || wickets >= maxPlayers - 1) {
+          localStorage.setItem('matchOver', 'true');
+          if (innings === 'A') {
+            localStorage.setItem('teamARuns', runs);
+          }
+          updateInputState();
+          updateWideButton();
+          updateStartTeamBBtn();
+        }
+      }
+    }
+
+    function addWide() {
+      let runs = parseInt(localStorage.getItem('runs') || '0');
+      const innings = localStorage.getItem('innings');
+      if(innings !== 'A' && innings !== 'B') return;
+
+      runs++;
+      localStorage.setItem('runs', runs);
+      loadScore();
+    }
+
+    function updateInputState() {
+      const matchOver = localStorage.getItem('matchOver') === 'true';
+      document.getElementById('runInput').disabled = matchOver;
+    }
+    function updateWideButton() {
+      const matchOver = localStorage.getItem('matchOver') === 'true';
+      const wideBtn = document.getElementById('wideBtn');
+      wideBtn.disabled = matchOver;
+    }
+    function updateStartTeamBBtn() {
+      const matchOver = localStorage.getItem('matchOver') === 'true';
+      const innings = localStorage.getItem('innings');
+      const btn = document.getElementById('startTeamBBtn');
+      if (matchOver) {
+        btn.disabled = false;
+        btn.style.backgroundColor = '#e53935';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.onclick = () => {
+          if (innings === 'A') {
+            if (confirm("Team A innings over. Start Team B innings?")) {
+              startTeamB();
+            }
+          } else if (innings === 'B') {
+            if (confirm("Team B innings over. Check result?")) {
+              showResult();
+            }
+          }
+        };
+        btn.textContent = innings === 'A' ? 'Start Team B' : 'Check Result';
+      } else {
+        btn.disabled = true;
+        btn.style.backgroundColor = '#888';
+        btn.style.color = '#ccc';
+        btn.style.cursor = 'default';
+        btn.onclick = null;
+        btn.textContent = innings === 'B' ? 'Check Result' : 'Start Team B';
+      }
+    }
+
+    function startTeamB() {
+      localStorage.setItem('innings', 'B');
+      localStorage.setItem('runs', '0');
+      localStorage.setItem('balls', '0');
+      localStorage.setItem('wickets', '0');
+      localStorage.setItem('matchOver', 'false');
+
+      loadScore();
+      updateInputState();
+      updateWideButton();
+      updateStartTeamBBtn();
+
+      document.getElementById('runInput').disabled = false;
+      document.getElementById('wideBtn').disabled = false;
+      document.getElementById('runInput').focus();
+    }
+
+    function showResult() {
+      const teamARuns = parseInt(localStorage.getItem('teamARuns') || '0');
+      const teamBRuns = parseInt(localStorage.getItem('runs') || '0');
+      let diff = Math.abs(teamARuns - teamBRuns);
+      let msg = '';
+      if (teamBRuns > teamARuns) {
+        msg = `Team B wins by ${diff} run${diff !== 1 ? 's' : ''}!`;
+      } else if (teamBRuns < teamARuns) {
+        msg = `Team A wins by ${diff} run${diff !== 1 ? 's' : ''}!`;
+      } else {
+        msg = `Match tied!`;
+      }
+      showWinPage(msg);
+    }
+
+    function loadScore() {
+      let runs = parseInt(localStorage.getItem('runs') || '0');
+      let balls = parseInt(localStorage.getItem('balls') || '0');
+      let wickets = parseInt(localStorage.getItem('wickets') || '0');
+      let overs = Math.floor(balls / 6) + '.' + (balls % 6);
+      document.getElementById('scoreDisplay').innerText = `Runs: ${runs} | Overs: ${overs} | Wickets: ${wickets}`;
+
+      // Update big custom display
+      document.getElementById('customRunsWickets').innerText = `${runs}-${wickets}`;
+      document.getElementById('customOvers').innerText = `${overs}`;
+
+      const innings = localStorage.getItem('innings');
+      if(innings === 'B') {
+        const maxPlayers = parseInt(localStorage.getItem('maxPlayers') || '11');
+        const maxOvers = parseInt(localStorage.getItem('maxOvers') || '9999');
+        const oversCompleted = Math.floor(balls / 6);
+        const ballsInCurrentOver = balls % 6;
+        if ((oversCompleted >= maxOvers && ballsInCurrentOver === 0) || wickets >= maxPlayers - 1) {
+          localStorage.setItem('matchOver', 'true');
+          updateInputState();
+          updateWideButton();
+          updateStartTeamBBtn();
+        }
+      }
+    }
+
+    function showWinPage(message) {
+      hideAllPages();
+      document.getElementById('winMessage').innerText = message;
+      document.getElementById('winPage').classList.remove('hidden');
+    }
+
+    function resetMatchConfirm() {
+      if (confirm("Are you sure you want to reset the match? This cannot be undone.")) {
+        resetMatch();
+        togglePizzaMenu(false);
+        toggleSetupPizzaMenu(false);
+      }
+    }
+    function resetSessionConfirm() {
+      if (confirm("Are you sure you want to reset the entire session? This will log you out.")) {
+        resetSession();
+        togglePizzaMenu(false);
+        toggleSetupPizzaMenu(false);
+      }
     }
 
     function resetMatch() {
-      fetch('https://scoreboy-backend.onrender.com/api/reset', {
-        method: 'POST'
-      })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message); // Shows: "Backend match data reset"
-
-        // Reset frontend display
-        document.getElementById('runsDisplay').textContent = 'Runs: 0';
-        document.getElementById('wicketsDisplay').textContent = 'Wickets: 0';
-        document.getElementById('oversDisplay').textContent = 'Overs: 0.0';
-      })
-      .catch(error => {
-        console.error('Error resetting match:', error);
-      });
+      localStorage.removeItem('runs');
+      localStorage.removeItem('balls');
+      localStorage.removeItem('wickets');
+      localStorage.removeItem('innings');
+      localStorage.removeItem('maxPlayers');
+      localStorage.removeItem('maxOvers');
+      localStorage.removeItem('matchOver');
+      localStorage.removeItem('teamARuns');
+      hideAllPages();
+      document.getElementById('setupPage').classList.remove('hidden');
     }
+
+    function resetSession() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    function togglePizzaMenu(show) {
+      const menu = document.getElementById('pizzaMenu');
+      if (typeof show === 'boolean') {
+        menu.style.display = show ? 'block' : 'none';
+      } else {
+        menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+      }
+    }
+
+    function toggleSetupPizzaMenu(show) {
+      const menu = document.getElementById('setupPizzaMenu');
+      if (typeof show === 'boolean') {
+        menu.style.display = show ? 'block' : 'none';
+      } else {
+        menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+      }
+    }
+
+    function hideAllPages() {
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('menuPage').classList.add('hidden');
+      document.getElementById('setupPage').classList.add('hidden');
+      document.getElementById('scorePage').classList.add('hidden');
+      document.getElementById('winPage').classList.add('hidden');
+    }
+
+    window.onload = () => {
+      if (localStorage.getItem('loggedIn') === 'true') {
+        showMenu();
+        const selected = localStorage.getItem('selectedPage');
+        if (selected === '1') {
+          const innings = localStorage.getItem('innings');
+          if (!innings) {
+            hideAllPages();
+            document.getElementById('setupPage').classList.remove('hidden');
+          } else {
+            hideAllPages();
+            document.getElementById('scorePage').classList.remove('hidden');
+            loadScore();
+            updateInputState();
+            updateWideButton();
+            updateStartTeamBBtn();
+          }
+        }
+      }
+
+      // Score page menu toggle
+      document.getElementById('menuToggle').addEventListener('click', () => {
+        togglePizzaMenu();
+      });
+
+      // Setup page menu toggle
+      document.getElementById('setupMenuToggle').addEventListener('click', () => {
+        toggleSetupPizzaMenu();
+      });
+
+      document.addEventListener('click', (e) => {
+        const pizzaMenu = document.getElementById('pizzaMenu');
+        const menuToggle = document.getElementById('menuToggle');
+        const setupMenu = document.getElementById('setupPizzaMenu');
+        const setupToggle = document.getElementById('setupMenuToggle');
+
+        if (!pizzaMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+          pizzaMenu.style.display = 'none';
+        }
+        if (!setupMenu.contains(e.target) && !setupToggle.contains(e.target)) {
+          setupMenu.style.display = 'none';
+        }
+      });
+    };
   </script>
 </body>
 </html>
