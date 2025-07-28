@@ -34,7 +34,7 @@ async function submitScore() {
 }
 
 function resetMatch() {
-  fetch(`${BASE_URL}/api/reset`, {
+  fetch('https://scoreboy-backend.onrender.com/api/updateScore', {
     method: 'POST'
   })
   .then(response => response.json())
