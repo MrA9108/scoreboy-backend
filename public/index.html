@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scoreboy Lite</title>
+</head>
+<body>
+  <h1>Scoreboy Lite</h1>
+
+  <input id="scoreInput" type="text" placeholder="Enter score (0-6 or X)" maxlength="1" />
+  <button onclick="submitScore()">Submit Score</button>
+  <button onclick="resetMatch()">Reset Match</button>
+
+
+  <div id="runsDisplay">Runs: 0</div>
+  <div id="wicketsDisplay">Wickets: 0</div>
+  <div id="oversDisplay">Overs: 0.0</div>
+
+  <script src="script.js"></script>
+  <script>
+    function resetMatch() {
+      fetch('/api/reset', {
+        method: 'POST'
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message); // Shows: "Backend match data reset"
+
+        // Reset frontend display
+        document.getElementById('runs').textContent = '0';
+        document.getElementById('wickets').textContent = '0';
+        document.getElementById('overs').textContent = '0.0';
+      })
+      .catch(error => {
+        console.error('Error resetting match:', error);
+      });
+    }
+  </script>
+
+</body>
+</html>
