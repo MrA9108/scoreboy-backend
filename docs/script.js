@@ -12,7 +12,7 @@ async function submitScore() {
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/api/updateScore`, {
+    const response = await fetch('https://scoreboy-backend.onrender.com/api/updateScore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score })
