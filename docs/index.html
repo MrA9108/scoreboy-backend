@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scoreboy Lite</title>
+</head>
+<body>
+  <h1>Scoreboy Lite</h1>
+
+  <input id="scoreInput" type="text" placeholder="Enter score (0-6 or X)" maxlength="1" />
+  <button onclick="submitScore()">Submit Score</button>
+  <button onclick="resetMatch()">Reset Match</button>
+
+  <div id="runsDisplay">Runs: 0</div>
+  <div id="wicketsDisplay">Wickets: 0</div>
+  <div id="oversDisplay">Overs: 0.0</div>
+
+  <script>
+    function submitScore() {
+      const score = document.getElementById('scoreInput').value;
+
+      fetch('https://scoreboy-backend.onrender.com/api/updateScore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ score })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Update frontend display
+        document.getElementById('runsDisplay').textContent = `Runs: ${data.runs}`;
+        document.getElementById('wicketsDisplay').textContent = `Wickets: ${data.wickets}`;
+        document.getElementById('oversDisplay').textContent = `Overs: ${data.overs}`;
+
+        // Clear input
+        document.getElementById('scoreInput').value = '';
+      })
+      .catch(error => {
+        console.error('Error submitting score:', error);
+      });
+    }
+
+    function resetMatch() {
+      fetch('https://scoreboy-backend.onrender.com/api/reset', {
+        method: 'POST'
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message); // Shows: "Backend match data reset"
+
+        // Reset frontend display
+        document.getElementById('runsDisplay').textContent = 'Runs: 0';
+        document.getElementById('wicketsDisplay').textContent = 'Wickets: 0';
+        document.getElementById('oversDisplay').textContent = 'Overs: 0.0';
+      })
+      .catch(error => {
+        console.error('Error resetting match:', error);
+      });
+    }
+  </script>
+</body>
+</html>
